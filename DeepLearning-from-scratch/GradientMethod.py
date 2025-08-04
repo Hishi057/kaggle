@@ -76,8 +76,12 @@ for i in range(0,len(x_test), batch_size):
     y_batch = predict(x_batch)
     p_y = np.argmax(y_batch, axis=1)
     p_t = np.argmax(t_batch, axis=1)
+    print("p_y: "+ str(p_y))
+    print("p_t: "+ str(p_t))
     accuracy = np.sum(p_y == p_t) / batch_size
     print("batch 処理 " + str(i))
     print(accuracy)
+
+
 
 
