@@ -1,11 +1,25 @@
 #
-# 第三章の実装
+# 第四章 勾配法の実装
 #
 
 import numpy as np
 from dataset.mnist import load_mnist 
 from PIL import Image
 import pickle
+
+
+class simpleNet:
+    def __init__(self):
+        self.W = np.random.randn(784, 10) * 0.1
+        self.b = 0
+
+    def predict(self, x):
+        result = sigmoid(np.dot(x, self.W) + self.b)
+        return result
+
+    def loss(self, x, t):
+        p = np.sum((x - t) ** 2) / 2 #平均二乗法
+        return p
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -22,66 +36,40 @@ def show_image(img):
 
 def get_data():
     (x_train, t_train), (x_test, t_test) = load_mnist(
-        normalize=False, one_hot_label=True)
-    return x_test, t_test
+        normalize=True, one_hot_label=True)
+    return x_train, t_train
 
-def init_network():
-     with open("deep-learning-from-scratch-master/ch03/sample_weight.pkl", 'rb') as f:
-        network = pickle.load(f)
-        return network
-    
-"""
-    network = {}
-    network['W1'] = np.array([0.2, 0.2, 0.2])
-    network['W2'] = np.array([0.1, 0.2, 0.3])
-    network['W3'] = np.array([0.4, 0.5, 0.6])
-    network['b1'] = np.array([0.1, 0.1, 0.1])
-    network['b2'] = np.array([0.1, 0.1, 0.1])
-    network['b3'] = np.array([0.1, 0.1, 0.1])
-"""
+x_train, t_train = get_data()
+net = simpleNet()
 
-def predict(x):
-    network = init_network()
-    W1, W2, W3 = network['W1'], network['W2'], network['W3']
-    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+def numerical_gradient(f, x):
+    grad = np.zeros_like(x)
+    h = 1e-4
 
-    z1 = sigmoid(np.dot(x, W1) + b1)
-    z2 = sigmoid(np.dot(z1, W2) + b2)
-    z3 = softmax(np.dot(z2, W3) + b3)
-    return z3
+    for idx in (range(x.size)):
+        tmp_val = x[idx]
+        # f(x+h)
+        x[idx] = tmp_val + h
+        fxh1 = f(x) 
+        # f(x-h)
+        x[idx] = tmp_val - h
+        fxh2 = f(x)
 
-def loss_function(x, t):
-    return np.sum((x - t) ** 2) / 2
+        grad[idx] = (fxh1 - fxh2) / (2 * h)
+    return grad
 
+def f(dummy):
+    z1 = net.predict(x)
+    y = net.loss(z1, t_train[0:x.shape[0]])
+    return y
 
-x_test, t_test = get_data()
+batch_size = 10
+x = x_train[0:1][0]
 
-# 一個ずつ弁償
-"""
-id = 5
-print(t_test[id])
-x = x_test[id]
-
-output = predict(x)
-print(output * 100)  # 出力をパーセント表示
-print(np.argmax(output))  # 最大値のインデックスを取得
-"""
-
-# バッチ処理でまとめて検証
-print("バッチ処理開始")
-batch_size = 100
-for i in range(0,len(x_test), batch_size):
-    x_batch = x_test[i:i+batch_size]
-    t_batch = t_test[i:i+batch_size]
-    y_batch = predict(x_batch)
-    p_y = np.argmax(y_batch, axis=1)
-    p_t = np.argmax(t_batch, axis=1)
-    print("p_y: "+ str(p_y))
-    print("p_t: "+ str(p_t))
-    accuracy = np.sum(p_y == p_t) / batch_size
-    print("batch 処理 " + str(i))
-    print(accuracy)
-
-
-
-
+# 何回勾配を計算するか？
+num_iterations = 1000
+for i in range(num_iterations):
+    grad = numerical_gradient(f, W)
+    print(str(i) + "回目の損失関数: "+ str(f(x)))
+    # xを更新
+    x -= 1e-4 * grad

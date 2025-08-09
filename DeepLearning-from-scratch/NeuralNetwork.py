@@ -10,6 +10,7 @@ import pickle
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+
 def softmax(x):
     c = np.max(x)
     exp_x = np.exp(x - c)
